@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  db:
+    image: db-imagen
+    environment:
+      MYSQL_ROOT_PASSWORD: 12345
+      MYSQL_DATABASE: examen
+    deploy:
+      replicas: 1
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./db/datos/:/var/lib/mysql/
+    networks:
+      - mynetwork
+
+  frontend:
+    image: ejs-image
+    depends_on:
+      - restApp
+      - soapApp
+    ports:
+      - "3000:3000"
+    deploy:
+      replicas: 2
+    networks:
+      - mynetwork
+
+  restApp:
+    image: rest-image
+    depends_on:
+      - database
+    ports:
+      - "8080:8080" 
+    deploy:
+      replicas: 1
+    command: >
+      sh -c "while ! nc -z db 3306; do sleep 1; done; node index.js"
+    networks:
+      - mynetwork
+
+  soapApp:
+    image: soap-image
+    depends_on:
+      - database
+    ports:
+      - "8888:8888"
+    deploy:
+      replicas: 1
+    command: >
+      sh -c "while ! nc -z db 3306; do sleep 1; done; node index.js"
+    networks:
+      - mynetwork
+
+networks:
+  mynetwork:
